@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<h2>환영해{{username}}</h2>
+<p> 액세스 토큰 : {{accessToken}} </p>
+<p> 리플레쉬 토큰 : {{refreshToken}} </p>
+<!-- SSR 액세스 유효 시간 10분 -->
+<form method="post" action="/refresh">
+    <input type="hidden" name="accessToken" value="{{accessToken}}">
+    <input type="hidden" name="refreshToken" value="{{refreshToken}}"><br>
+    <input type="submit" value="수동 토큰 갱신">
+</form>
+    <!--로그아웃 버튼 추가-->
+<form method="post" action="/logout">
+    <input type="hidden" name="refreshToken" value="{{refreshToken}}"><br>
+    <input type="submit" value="로그아웃 처리">
+</form>
+
+
+    <!--자동 토큰 갱신 스크립트-->
+
+    <script>
+        const refreshToken = "{{refreshToken}}";
+        const initialAccessToken = "{{accessToken}}";
+        async function refreshAccessToken() {
+            try {
+                const response = await fetch('/refresh', {
+                    method: 'POST',
+                    headers: {'Content-Type' : 'application/x-www-form-urlencoded'}, // 외우기
+                    body : 'refreshToken=' + encodeURIComponent(refreshToken)
+                });
+
+                if (!response.ok) throw new Error("갱신 실패");
+                const html = await response.text();
+                document.body.innerHTML = html; // 페이지 갱신처리
+            } catch (error) {
+                console.error(error);
+                window.location.href = "/login"; // 실패시 로그인 페이지로 이동
+                // 페이지 이동
+
+            }
+        }
+        // 호출 -setTimeout 단 한번 실행 됨
+        // setTimeout(refreshAccessToken, 1000 * 3);
+
+        // 3초마다 계속 호출 (폴링)
+        setInterval(refreshAccessToken, 1000 * 3);
+    </script>
+
+</form>
+</body>
+</html>
